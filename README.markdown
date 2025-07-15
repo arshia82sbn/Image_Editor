@@ -53,6 +53,7 @@ This app is packed with amazing features that turn working with it into a deligh
 - **🖥️ Tkinter**: Comes pre-installed with Python, no extra setup needed.  
 - **🖼️ Pillow (PIL)**: Essential for the magic of image processing!  
 
+
 ### Installation Steps  
 1. If you don’t have Pillow, install it with this command:  
    ```bash  
