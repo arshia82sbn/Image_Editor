@@ -167,16 +167,8 @@ This app is packed with amazing features that turn working with it into a deligh
 
 ---
 
-## 📜 Project License
-
-This application is released under the **MIT License**. You’re free to use it, modify it, and work with it however you like! 😊  
-
----
-
 ## 📧 Contact Me
 
 Got a question or suggestion? I’d love to hear from you:  
 - **Author**: Arshia  
 - **Email**: [Arshia82sbn@gmail.com](mailto:arshiasbn82@gmail.com)  
-
-Hope this tool brings you tons of fun and creativity! 🎉 Now go create your masterpiece! 🖼️
