@@ -177,6 +177,6 @@ This application is released under the **MIT License**. You’re free to use it,
 
 Got a question or suggestion? I’d love to hear from you:  
 - **Author**: Arshia  
-- **Email**: [your-email@example.com](mailto:your-email@example.com)  
+- **Email**: [Arshia82sbn@gmail.com](mailto:arshiasbn82@gmail.com)  
 
 Hope this tool brings you tons of fun and creativity! 🎉 Now go create your masterpiece! 🖼️
