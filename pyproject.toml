@@ -1,0 +1,35 @@
+[build-system]
+requires = ["setuptools>=61.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "image_editor"
+version = "0.1.0"
+description = "A professional image editing and drawing tool."
+authors = [
+    { name = "Arshia" },
+]
+readme = "README.md"
+requires-python = ">=3.8"
+dependencies = [
+    "Pillow>=9.0.0",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=7.0.0",
+    "mypy>=1.0.0",
+    "ruff>=0.1.0",
+]
+
+[project.scripts]
+image-editor = "image_editor.api.gui:main"
+
+[tool.ruff]
+line-length = 100
+target-version = "py38"
+
+[tool.mypy]
+python_version = "3.9"
+strict = true
+ignore_missing_imports = true
