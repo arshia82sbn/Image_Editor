@@ -19,17 +19,65 @@ dependencies = [
 dev = [
     "pytest>=7.0.0",
     "mypy>=1.0.0",
-    "ruff>=0.1.0",
+    "ruff>=0.15.0",
 ]
 
 [project.scripts]
 image-editor = "image_editor.api.gui:main"
 
 [tool.ruff]
-line-length = 100
+line-length = 120
 target-version = "py38"
+
+[tool.ruff.lint]
+select = [
+    "E",   # pycodestyle errors
+    "F",   # pyflakes
+    "B",   # flake8-bugbear
+    "I",   # isort
+    "N",   # pep8-naming
+    "D",   # pydocstyle
+    "UP",  # pyupgrade
+    "ANN", # flake8-annotations
+    "S",   # flake8-bandit
+    "BLE", # flake8-blind-except
+    "FBT", # flake8-boolean-trap
+    "C4",  # flake8-comprehensions
+    "DTZ", # flake8-datetimez
+    "T10", # flake8-debugger
+    "EM",  # flake8-errmsg
+    "ICN", # flake8-import-conventions
+    "PT",  # flake8-pytest-style
+    "Q",   # flake8-quotes
+    "RET", # flake8-return
+    "SIM", # flake8-simplify
+    "ARG", # flake8-unused-arguments
+    "PTH", # flake8-use-pathlib
+    "ERA", # eradicate
+    "RUF", # Ruff-specific rules
+]
+ignore = [
+    "D100", # Missing docstring in public module
+    "D104", # Missing docstring in public package
+    "S101", # Use of assert detected
+    "ANN101", # Missing type annotation for self
+    "ANN102", # Missing type annotation for cls
+    "ANN204", # Missing return type annotation for special method `__init__`
+    "D107",   # Missing docstring in `__init__`
+    "FBT001", # Boolean-typed positional argument in function definition
+    "FBT002", # Boolean default positional argument in function definition
+    "EM101",  # Exception must not use a string literal
+    "EM102",  # Exception must not use an f-string literal
+    "ARG002", # Unused method argument (common in GUI callbacks)
+]
+
+[tool.ruff.lint.pydocstyle]
+convention = "google"
 
 [tool.mypy]
 python_version = "3.9"
 strict = true
 ignore_missing_imports = true
+warn_unused_configs = true
+disallow_untyped_defs = true
+check_untyped_defs = true

@@ -1,23 +1,32 @@
 from typing import Optional, Tuple
+
 from PIL import Image
-from image_editor.models.state import EditorState
-from image_editor.models.pen import PenConfig
+
 from image_editor.core.commands import Command, FilterCommand
 from image_editor.core.filters import get_filter
-from image_editor.infra.image_handler import load_image, save_image, resize_to_fit
+from image_editor.core.repository import ImageRepository
+from image_editor.models.pen import PenConfig
+from image_editor.models.state import EditorState
+
 
 class ImageEditor:
     """Facade for the image editor application logic.
 
-    Manages the state, commands, and infrastructure interactions.
+    Manages the state, commands, and repository interactions.
     """
 
-    def __init__(self) -> None:
+    def __init__(self, repository: ImageRepository) -> None:
+        """Initializes the editor with a repository.
+
+        Args:
+            repository (ImageRepository): The repository to use for image operations.
+        """
         self.state = EditorState()
         self.pen = PenConfig()
+        self.repository = repository
 
     def open_image(self, file_path: str, canvas_size: Tuple[int, int]) -> Image.Image:
-        """Opens and resizes an image.
+        """Opens and resizes an image using the repository.
 
         Args:
             file_path (str): Path to the image file.
@@ -26,8 +35,8 @@ class ImageEditor:
         Returns:
             Image.Image: The opened and resized image.
         """
-        image = load_image(file_path)
-        resized = resize_to_fit(image, canvas_size)
+        image = self.repository.load(file_path)
+        resized = self.repository.resize(image, canvas_size)
 
         self.state.file_path = file_path
         self.state.original_image = resized.copy()
@@ -37,20 +46,20 @@ class ImageEditor:
         return self.state.current_image
 
     def save_current_image(self, file_path: str) -> None:
-        """Saves the current image to a file.
+        """Saves the current image using the repository.
 
         Args:
             file_path (str): Path to save the image to.
         """
         if self.state.current_image:
-            save_image(self.state.current_image, file_path)
+            self.repository.save(self.state.current_image, file_path)
 
     def apply_command(self, command: Command, push_to_history: bool = True) -> Image.Image:
         """Executes a command on the current image and optionally saves to history.
 
         Args:
             command (Command): The command to execute.
-            push_to_history (bool): Whether to save the current state to history before applying.
+            push_to_history (bool): Whether to save the current state to history.
 
         Returns:
             Image.Image: The updated image.
@@ -61,11 +70,9 @@ class ImageEditor:
         if not self.state.current_image:
             raise ValueError("No image loaded.")
 
-        # Save current state to history before modifying if requested
         if push_to_history:
             self.state.push_history(self.state.current_image)
 
-        # Execute command
         self.state.current_image = command.execute(self.state.current_image)
         return self.state.current_image
 
@@ -86,7 +93,7 @@ class ImageEditor:
         """Reverts the last change.
 
         Returns:
-            Optional[Image.Image]: The previous image state, or None if no more undo states.
+            Optional[Image.Image]: The previous image state.
         """
         previous = self.state.pop_history()
         if previous:
@@ -98,7 +105,7 @@ class ImageEditor:
         """Clears all changes and reverts to the original image.
 
         Returns:
-            Optional[Image.Image]: The original image, or None if no image is loaded.
+            Optional[Image.Image]: The original image.
         """
         if self.state.original_image and self.state.current_image:
             self.state.push_history(self.state.current_image)

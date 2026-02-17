@@ -1,5 +1,6 @@
 from dataclasses import dataclass
 
+
 @dataclass
 class PenConfig:
     """Configuration for the drawing pen.

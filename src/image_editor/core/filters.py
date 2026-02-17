@@ -1,5 +1,7 @@
 from abc import ABC, abstractmethod
+
 from PIL import Image, ImageFilter, ImageOps
+
 
 class FilterStrategy(ABC):
     """Abstract base class for image filters."""
@@ -18,27 +20,37 @@ class FilterStrategy(ABC):
 
 class GrayscaleFilter(FilterStrategy):
     """Converts the image to grayscale."""
+
     def apply(self, image: Image.Image) -> Image.Image:
+        """Applies grayscale filter."""
         return ImageOps.grayscale(image)
 
 class BlurFilter(FilterStrategy):
     """Applies a blur effect to the image."""
+
     def apply(self, image: Image.Image) -> Image.Image:
+        """Applies blur filter."""
         return image.filter(ImageFilter.BLUR)
 
 class SharpenFilter(FilterStrategy):
     """Applies a sharpening effect to the image."""
+
     def apply(self, image: Image.Image) -> Image.Image:
+        """Applies sharpen filter."""
         return image.filter(ImageFilter.SHARPEN)
 
 class SmoothFilter(FilterStrategy):
     """Applies a smoothing effect to the image."""
+
     def apply(self, image: Image.Image) -> Image.Image:
+        """Applies smooth filter."""
         return image.filter(ImageFilter.SMOOTH)
 
 class EmbossFilter(FilterStrategy):
     """Applies an emboss effect to the image."""
+
     def apply(self, image: Image.Image) -> Image.Image:
+        """Applies emboss filter."""
         return image.filter(ImageFilter.EMBOSS)
 
 def get_filter(name: str) -> FilterStrategy:
