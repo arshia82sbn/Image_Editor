@@ -1,6 +1,8 @@
-from typing import List, Optional
-from PIL import Image
 from dataclasses import dataclass, field
+from typing import List, Optional
+
+from PIL import Image
+
 
 @dataclass
 class EditorState:

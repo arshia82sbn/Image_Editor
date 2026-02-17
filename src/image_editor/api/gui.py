@@ -1,9 +1,18 @@
 import tkinter as tk
-from tkinter import filedialog, colorchooser, ttk
-from typing import Optional, Callable
+from tkinter import colorchooser, filedialog, ttk
+from typing import Callable, Optional
+
 from PIL import Image, ImageTk
+
+from image_editor.core.commands import (
+    DrawLineCommand,
+    DrawOvalCommand,
+    DrawRectangleCommand,
+    DrawTextCommand,
+)
 from image_editor.core.editor import ImageEditor
-from image_editor.core.commands import DrawOvalCommand, DrawRectangleCommand, DrawLineCommand, DrawTextCommand
+from image_editor.infra.repository import FileSystemImageRepository
+
 
 class ImageEditorApp:
     """The main GUI application for the Image Editor."""
@@ -19,24 +28,44 @@ class ImageEditorApp:
         self.root.geometry("1100x700")
         self.root.config(bg="white")
 
-        self.editor = ImageEditor()
+        # Initialize core with infra implementation
+        self.repository = FileSystemImageRepository()
+        self.editor = ImageEditor(self.repository)
+
         self.current_tool = "Free Draw"
+        self.temp_item: Optional[int] = None
+        self.start_x = 0
+        self.start_y = 0
+        self._current_photo: Optional[ImageTk.PhotoImage] = None
 
         self._setup_ui()
 
     def _setup_ui(self) -> None:
         """Sets up the user interface components."""
-        # Sidebar
+        self._setup_sidebar()
+        self._setup_canvas()
+
+    def _setup_sidebar(self) -> None:
+        """Creates and populates the sidebar."""
         self.sidebar = tk.Frame(self.root, width=200, height=700, bg="#47CDD2")
         self.sidebar.pack(side="left", fill="y")
 
-        # Buttons
+        self._setup_action_buttons()
+        self._setup_tool_selection()
+        self._setup_text_input()
+        self._setup_pen_size_controls()
+        self._setup_filter_selection()
+
+    def _setup_action_buttons(self) -> None:
+        """Adds main action buttons to the sidebar."""
         tk.Button(self.sidebar, text="Add Image", command=self._add_image).pack(pady=10, fill="x", padx=10)
         tk.Button(self.sidebar, text="Undo", command=self._undo).pack(pady=5, fill="x", padx=10)
         tk.Button(self.sidebar, text="Clear", command=self._clear).pack(pady=5, fill="x", padx=10)
         tk.Button(self.sidebar, text="Change Color", command=self._change_color).pack(pady=5, fill="x", padx=10)
+        tk.Button(self.sidebar, text="Save Image", command=self._save_image).pack(pady=10, fill="x", padx=10)
 
-        # Tool selection
+    def _setup_tool_selection(self) -> None:
+        """Adds tool selection radio buttons."""
         tk.Label(self.sidebar, text="Tools", bg="#47CDD2").pack(pady=(10, 0))
         tools = ["Free Draw", "Rectangle", "Line", "Text"]
         self.tool_var = tk.StringVar(value="Free Draw")
@@ -44,44 +73,43 @@ class ImageEditorApp:
             tk.Radiobutton(self.sidebar, text=tool, variable=self.tool_var, value=tool,
                            command=self._update_tool).pack(anchor="w", padx=20)
 
-        tk.Button(self.sidebar, text="Save Image", command=self._save_image).pack(pady=10, fill="x", padx=10)
-
-        # Text input for text tool
+    def _setup_text_input(self) -> None:
+        """Adds text entry for the text tool."""
         self.text_entry = tk.Entry(self.sidebar)
         self.text_entry.pack(pady=5, padx=10)
         self.text_entry.insert(0, "Enter text here")
 
-        # Pen Size
+    def _setup_pen_size_controls(self) -> None:
+        """Adds pen size selection controls."""
         tk.Label(self.sidebar, text="Pen Size", bg="#47CDD2").pack(pady=(10, 0))
         self.size_var = tk.IntVar(value=5)
 
         def make_set_size(s: int) -> Callable[[], None]:
             return lambda: self.editor.set_pen_size(s)
 
+        size_frame = tk.Frame(self.sidebar, bg="#47CDD2")
+        size_frame.pack(fill="x", padx=10)
         for size in [3, 5, 7]:
-            tk.Radiobutton(self.sidebar, text=str(size), variable=self.size_var, value=size,
-                           command=make_set_size(size)).pack(side="left", padx=10)
+            tk.Radiobutton(size_frame, text=str(size), variable=self.size_var, value=size,
+                           command=make_set_size(size), bg="#47CDD2").pack(side="left", expand=True)
 
-        # Filters
-        tk.Label(self.sidebar, text="Select Filter", bg="#47CDD2").pack(pady=(20, 0), side="top")
+    def _setup_filter_selection(self) -> None:
+        """Adds filter selection dropdown."""
+        tk.Label(self.sidebar, text="Select Filter", bg="#47CDD2").pack(pady=(20, 0))
         self.filter_combobox = ttk.Combobox(self.sidebar, values=[
             "Black and White", "Blur", "Emboss", "Sharpen", "Smooth"
         ])
         self.filter_combobox.pack(pady=5, padx=10)
         self.filter_combobox.bind("<<ComboboxSelected>>", self._apply_filter)
 
-        # Canvas
+    def _setup_canvas(self) -> None:
+        """Creates and binds the drawing canvas."""
         self.canvas = tk.Canvas(self.root, width=900, height=700, bg="white")
         self.canvas.pack(side="right", expand=True, fill="both")
 
-        # Binds
         self.canvas.bind("<B1-Motion>", self._on_canvas_drag)
         self.canvas.bind("<Button-1>", self._on_canvas_click)
         self.canvas.bind("<ButtonRelease-1>", self._on_canvas_release)
-
-        self.start_x = 0
-        self.start_y = 0
-        self.temp_item: Optional[int] = None
 
     def _update_tool(self) -> None:
         self.current_tool = self.tool_var.get()
@@ -89,7 +117,6 @@ class ImageEditorApp:
     def _add_image(self) -> None:
         file_path = filedialog.askopenfilename()
         if file_path:
-            # Determine canvas size
             self.root.update()
             canvas_width = self.canvas.winfo_width()
             canvas_height = self.canvas.winfo_height()
@@ -125,7 +152,7 @@ class ImageEditorApp:
 
     def _display_image(self, image: Image.Image) -> None:
         photo = ImageTk.PhotoImage(image)
-        setattr(self.canvas, "image", photo)  # Keep reference to avoid GC
+        self._current_photo = photo
         self.canvas.delete("all")
         self.canvas.create_image(0, 0, image=photo, anchor="nw")
 
@@ -136,7 +163,6 @@ class ImageEditorApp:
         if not self.editor.state.current_image:
             return
 
-        # Push history once at the start of a drawing action
         if self.current_tool in ["Free Draw", "Rectangle", "Line"]:
             self.editor.state.push_history(self.editor.state.current_image)
 
@@ -156,7 +182,6 @@ class ImageEditorApp:
                 event.x + self.editor.pen.size, event.y + self.editor.pen.size,
                 self.editor.pen
             )
-            # Apply command WITHOUT pushing to history (history already pushed on click)
             image = self.editor.apply_command(command, push_to_history=False)
             self._display_image(image)
 
@@ -181,18 +206,17 @@ class ImageEditorApp:
 
         if self.current_tool == "Rectangle":
             rect_cmd = DrawRectangleCommand(self.start_x, self.start_y, event.x, event.y, self.editor.pen)
-            # Apply command WITHOUT pushing to history (history already pushed on click)
             image = self.editor.apply_command(rect_cmd, push_to_history=False)
             self._display_image(image)
         elif self.current_tool == "Line":
             line_cmd = DrawLineCommand(self.start_x, self.start_y, event.x, event.y, self.editor.pen)
-            # Apply command WITHOUT pushing to history (history already pushed on click)
             image = self.editor.apply_command(line_cmd, push_to_history=False)
             self._display_image(image)
 
         self.temp_item = None
 
 def main() -> None:
+    """Entry point for the application."""
     root = tk.Tk()
     _ = ImageEditorApp(root)
     root.mainloop()
